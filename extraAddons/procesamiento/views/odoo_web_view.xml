@@ -1,0 +1,172 @@
+<odoo>
+    <!-- Ocultar enlace "Contáctenos" -->
+    <template id="custom_hide_contact_link" inherit_id="website.layout">
+        <xpath expr="//head" position="inside">
+            <style>
+                a[href*="/contactus"] {
+                    display: none !important;
+                }
+            </style>
+        </xpath>
+    </template>
+
+    <!-- Ocultar el pie de página -->
+    <template id="custom_hide_footer" inherit_id="website.layout">
+        <xpath expr="//head" position="inside">
+            <style>
+                footer {
+                    display: none !important;
+                }
+            </style>
+        </xpath>
+    </template>
+
+    <!-- Importar FontAwesome -->
+    <template id="add_fontawesome" inherit_id="website.layout">
+        <xpath expr="//head" position="inside">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+        </xpath>
+    </template>
+
+    <!-- Agregar el título "Procesamiento de Archivos" y el cuadro para subir archivos -->
+    <template id="add_file_upload_to_homepage" inherit_id="website.homepage">
+        <xpath expr="//div" position="after">
+            <section class="sheet" style="background-color: #f9f9f9; padding: 50px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                <div class="container text-center" style="padding: 40px;">
+                    <h1>Procesamiento de Archivos</h1>
+                    <div style="margin-top: 30px; border: 2px dashed #007bff; padding: 20px; max-width: 500px; margin-left: auto; margin-right: auto; background-color: #fff; border-radius: 10px;">
+                        <h4 style="margin-bottom: 20px;">Arrastra y suelta un archivo aquí o haz clic para subir</h4>
+                        <form id="file-upload-form" enctype="multipart/form-data">
+                            <input type="file" name="file" id="fileInput" accept=".zip" style="display: block; margin: 20px auto;" />
+                            <button type="button" class="btn btn-primary" id="submitBtn" style="padding: 10px 30px;">
+                                <i class="fa fa-play"></i> Procesar
+                            </button>
+                        </form>
+                    </div>
+                    <div id="progress-bar-container" style="display: none; margin-top: 30px;">
+                        <div id="progress-bar" style="height: 20px; width: 0%; background-color: #4caf50;"></div>
+                    </div>
+                    
+                    <!-- Mostrar resultados de la validación aquí -->
+                    <div id="validation-messages" style="margin-top: 20px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                        <!-- Mensajes dinámicos aparecerán aquí -->
+                    </div>
+                </div>
+            </section>
+        </xpath>
+    </template>
+
+    <!-- Script para simular barra de progreso -->
+    <template id="add_alert_script" inherit_id="website.layout">
+    <xpath expr="//body" position="after">
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var fileInput = document.getElementById("fileInput");
+                var submitBtn = document.getElementById("submitBtn");
+                var progressBar = document.getElementById("progress-bar");
+                var progressBarContainer = document.getElementById("progress-bar-container");
+                var validationMessages = document.getElementById("validation-messages");
+
+                // Simular barra de progreso
+                function simulateProgressBar(callback) {
+                    progressBarContainer.style.display = "block";
+                    var width = 0;
+                    var interval = setInterval(function() {
+                        if (width >= 100) {
+                            clearInterval(interval);
+                            callback();
+                        } else {
+                            width += 1;
+                            progressBar.style.width = width + "%";
+                        }
+                    }, 20);  // 2 segundos en total (100 * 20ms = 2000ms)
+                }
+
+                // Validación del formulario antes de enviarlo
+                submitBtn.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    if (!fileInput.files.length) {
+                        showStickyAlert('Por favor, selecciona un archivo antes de procesar.');
+                        return;
+                    }
+                    var file = fileInput.files[0];
+
+                    if (!file.name.endsWith('.zip')) {
+                        showStickyAlert('El archivo debe ser de tipo .zip.');
+                        return;
+                    }
+
+                    var formData = new FormData();
+                    formData.append('file', file);
+
+                    simulateProgressBar(function() {
+                        // Enviar datos a través de AJAX
+                        fetch('/validate_zip_file', {
+                            method: 'POST',
+                            body: formData,
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Datos recibidos de validate_zip_file:', data); // Aquí se agrega el console.log para validar los datos.
+                            
+                            validationMessages.innerHTML = '';
+                            if (data.error) {
+                                validationMessages.innerHTML = `<p style="color: red;"><i class="fa fa-times-circle"></i> ${data.error}</p>`;
+                            } else {
+                                if (data.cliente_exists) {
+                                    validationMessages.innerHTML += `<p><i class="fa fa-check-circle" style="color: green;"></i> El cliente se encuentra registrado.</p>`;
+                                } else {
+                                    validationMessages.innerHTML += `<p><i class="fa fa-times-circle" style="color: red;"></i> El cliente no se encuentra registrado.</p>`;
+                                }
+
+                                if (data.branch_exists) {
+                                    validationMessages.innerHTML += `<p><i class="fa fa-check-circle" style="color: green;"></i> La sucursal se encuentra registrada.</p>`;
+                                } else {
+                                    validationMessages.innerHTML += `<p><i class="fa fa-times-circle" style="color: red;"></i> No se encontró ningún branch con ese número.</p>`;
+                                }
+
+                                if (data.is_today) {
+                                    validationMessages.innerHTML += `<p><i class="fa fa-check-circle" style="color: green;"></i> El paquete es del día de hoy.</p>`;
+                                } else {
+                                    validationMessages.innerHTML += `<p><i class="fa fa-exclamation-circle" style="color: orange;"></i> El paquete no es del día de hoy.</p>`;
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error en el servidor:', error); // Agregamos un console.error para rastrear errores.
+                            validationMessages.innerHTML = `<p style="color: red;"><i class="fa fa-times-circle"></i> Error en el servidor.</p>`;
+                        });
+                    });
+                });
+
+                // Función para mostrar alerta sticky
+                function showStickyAlert(message) {
+                    var alertDiv = document.createElement("div");
+                    alertDiv.textContent = message;
+                    alertDiv.style.position = "fixed";
+                    alertDiv.style.top = "10px";
+                    alertDiv.style.right = "10px";
+                    alertDiv.style.backgroundColor = "#f44336"; 
+                    alertDiv.style.color = "white";
+                    alertDiv.style.padding = "15px";
+                    alertDiv.style.zIndex = "9999";
+                    alertDiv.style.borderRadius = "5px";
+                    alertDiv.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+                    alertDiv.style.cursor = "pointer";
+
+                    alertDiv.addEventListener("click", function() {
+                        alertDiv.remove();
+                    });
+
+                    document.body.appendChild(alertDiv);
+                    setTimeout(function() {
+                        if (alertDiv) {
+                            alertDiv.remove();
+                        }
+                    }, 5000);
+                }
+            });
+        </script>
+    </xpath>
+    </template>
+</odoo>

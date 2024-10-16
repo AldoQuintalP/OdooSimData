@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Vista heredada de res.config.settings -->
+    <record id="view_res_config_settings_inherit_clients_folder" model="ir.ui.view">
+        <field name="name">res.config.settings.inherit.clients_folder</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block"
+                     data-string="Gestión de Clientes"
+                     string="Gestión de Clientes"
+                     data-key="clients_folder">
+                    <h2>Configuración de directorios</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Ruta de la carpeta CLIENTS</span>
+                                <div class="text-muted content-group mt16">
+                                    <field name="clients_folder_path" style="width: 150%;"/>
+                                </div>
+                                <span class="o_form_label">Ruta de la 2-Working</span>
+                                <div class="text-muted content-group mt16">
+                                    <field name="working_folder_path" style="width: 150%;"/>
+                                </div>
+                                <span class="o_form_label">Ruta de la carpeta 3-Sandbox</span>
+                                <div class="text-muted content-group mt16">
+                                    <field name="sandbox_folder_path" style="width: 150%;"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_config_settings_action_clients_folder" model="ir.actions.act_window">
+        <field name="name">Configuración de la carpeta CLIENTS</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'my_module'}</field>
+    </record>
+
+    <menuitem id="clients_management_menu_root"
+          name="Gestión de Clientes"
+          sequence="1"
+          web_icon="extraAddons/procesamiento/static/src/img/odoo_icon.png,16,16"/>
+
+    
+    <menuitem id="clients_management_menu_action"
+              name="Configuración"
+              parent="clients_management_menu_root"
+              sequence="6"/>
+
+    <menuitem id="clients_folder_settings_menu_action"
+              name="Carpeta CLIENTS"
+              parent="clients_management_menu_action"
+              action="res_config_settings_action_clients_folder"
+              sequence="7"/>
+</odoo>

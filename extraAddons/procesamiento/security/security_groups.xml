@@ -1,0 +1,14 @@
+<odoo>
+    <data noupdate="1">
+        <!-- Grupo de usuarios básicos de procesamiento -->
+        <record id="group_procesamiento_user" model="res.groups">
+            <field name="name">Usuarios Procesamiento</field>
+        </record>
+
+        <!-- Grupo de administradores del módulo procesamiento -->
+        <record id="group_procesamiento_manager" model="res.groups">
+            <field name="name">Administradores Procesamiento</field>
+            <field name="implied_ids" eval="[(4, ref('group_procesamiento_user'))]"/>
+        </record>
+    </data>
+</odoo>
